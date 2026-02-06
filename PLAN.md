@@ -72,8 +72,8 @@ The trade-off is more implementation effort, but this is the centerpiece of the 
 │ type         │     │ original_amount  │     │ type (enum)      │
 │ currency     │     │ original_currency│     │   inflow/outflow │
 │ is_active    │     │ converted_amount │     └──────────────────┘
-│ created_at   │     │ converted_curr   │            ▲
-└──────────────┘     │ description      │            │
+│ group_name   │     │ converted_curr   │            ▲
+│ created_at   │     │ description      │            │
                      │ raw_description  │     ┌──────┴───────────┐
                      │ direction (enum) │     │ transaction_labels│
                      │   inflow/outflow │     ├──────────────────┤
@@ -81,8 +81,10 @@ The trade-off is more implementation effort, but this is the centerpiece of the 
                      │ auto_category    │     │ label_id         │
                      │ strand_id (FK)   │     └──────────────────┘
                      │ is_recurring     │
-                     │ created_at       │     ┌──────────────────┐
-                     └──────────────────┘     │     strands      │
+                     │ is_transfer      │     ┌──────────────────┐
+                     │ exclude_from_flow│     │                  │
+                     │ created_at       │     │     strands      │
+                     └──────────────────┘     │                  │
                             │                 ├──────────────────┤
                             └────────────────►│ id (PK)          │
                                               │ name             │
@@ -814,9 +816,52 @@ This avoids floating-point errors in aggregation. Display formatting divides by 
 
 ---
 
-## 19. Open Questions & Decisions to Make
+## 19. Design Decisions (Resolved)
 
-1. **Investment account handling**: Should stock purchases/sales show as outflows/inflows, or should the investment account just show net value change? (Recommendation: show deposits/withdrawals as flows, market gains/losses as a separate "Market" strand)
-2. **Credit card treatment**: A credit card balance is negative reserves. Should the Sankey show credit card spending as outflows from the credit card "account"? (Recommendation: yes, and the starting/ending nodes show the balance owed)
-3. **Multi-currency Sankey**: Should the Sankey show everything in one display currency, or show separate lanes per currency? (Recommendation: single display currency with a toggle, since mixed currencies make strand thickness comparisons meaningless)
-4. **Revolut multi-pocket**: Revolut has separate currency pockets. Model as one account or multiple? (Recommendation: one account per currency pocket, with an "account group" concept for display)
+### 1. Investment Account Handling — Deposits/Withdrawals Only
+
+Only cash moving in/out of Trading 212 appears as flows in the Sankey. Stock purchases and sales are **not** rendered as outflows/inflows (since the money is still yours, just in a different form). Market gains/losses are represented as a separate "Market Movement" strand that explains the delta between total deposits and current portfolio value. Individual trades are accessible in the Trading 212 account detail view but do not clutter the main flow chart.
+
+**Implications for the parser**: Trading 212 CSV `Action` values are mapped as follows:
+- `Deposit` → inflow strand into Trading 212 node
+- `Withdrawal` → outflow strand from Trading 212 node
+- `Dividend` → inflow strand (categorized as `investment_return`)
+- `Market buy` / `Market sell` → stored in DB but excluded from Sankey flows; used only to compute portfolio value for the "Market Movement" strand
+- Net unrealized gain/loss = (current portfolio value) − (total deposits − total withdrawals) → rendered as a special "Market Movement" strand
+
+### 2. Credit Card Treatment — Spending-Based
+
+Credit card transactions (the actual purchases: groceries, dining, etc.) are the outflows in the Sankey, categorized by what was bought. Bill payments from a checking account to the credit card are treated as **internal transfers** and hidden from the top-level Sankey to avoid double-counting.
+
+The credit card account node shows:
+- **Starting state**: balance owed (displayed as negative reserves, e.g., "Chase CC: −$1,200")
+- **Ending state**: current balance owed
+
+This means the user sees what they actually spent money *on*, not just a opaque "credit card bill" lump.
+
+**Implications for inter-account transfer detection**: The transfer detector (§14) must recognize credit card payments. Heuristic: an outflow from a checking account with description matching `/payment|credit card|card payment/i` that roughly matches a reduction in credit card balance within ±3 days.
+
+### 3. Multi-Currency Display — Single Currency with Native Tooltip
+
+The Sankey renders all amounts in a single user-selected display currency (USD, GBP, EUR, or TRY). This makes strand thickness directly comparable. The user can switch display currency at any time via a dropdown.
+
+On hover, tooltips show **both** the converted amount and the original amount in native currency:
+```
+Rent: $2,200/mo (£1,740/mo)
+23 transactions • Monthly recurring
+```
+
+This preserves the "real" numbers while keeping the chart visually coherent.
+
+### 4. Revolut — Separate Accounts, Grouped Display
+
+Each Revolut currency pocket (GBP, EUR, USD, TRY) is modeled as a **separate account** in the database (e.g., "Revolut GBP", "Revolut EUR"). This matches how Revolut exports data (one CSV per pocket) and simplifies the parser and data model.
+
+In the UI, these accounts are **visually grouped** under a "Revolut" header:
+- Account list shows: `▼ Revolut` → `Revolut GBP: £1,200` / `Revolut EUR: €800` / ...
+- Sankey starting/ending nodes can be toggled between expanded (one node per pocket) and collapsed (one "Revolut" node showing combined value in display currency)
+- The `accounts` table gets an optional `group_name` field for this grouping
+
+```sql
+ALTER TABLE accounts ADD COLUMN group_name TEXT; -- e.g., 'Revolut'
+```
