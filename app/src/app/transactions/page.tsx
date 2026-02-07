@@ -13,13 +13,13 @@ export default function TransactionsPage() {
 
   useEffect(() => {
     Promise.all([
-      fetch('/api/accounts').then(r => r.json()),
-      fetch('/api/transactions').then(r => r.json()),
+      fetch('/api/accounts').then(r => r.ok ? r.json() : []),
+      fetch('/api/transactions').then(r => r.ok ? r.json() : []),
     ]).then(([accts, txns]) => {
-      setAccounts(accts);
-      setTransactions(txns);
+      if (Array.isArray(accts)) setAccounts(accts);
+      if (Array.isArray(txns)) setTransactions(txns);
       setLoading(false);
-    });
+    }).catch(() => setLoading(false));
   }, []);
 
   const filtered = transactions.filter(tx => {

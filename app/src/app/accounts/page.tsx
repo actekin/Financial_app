@@ -41,9 +41,17 @@ export default function AccountsPage() {
   }, []);
 
   async function fetchAccounts() {
-    const res = await fetch('/api/accounts');
-    const data = await res.json();
-    setAccounts(data);
+    try {
+      const res = await fetch('/api/accounts');
+      if (!res.ok) {
+        console.error('Failed to fetch accounts:', res.status);
+        return;
+      }
+      const data = await res.json();
+      if (Array.isArray(data)) setAccounts(data);
+    } catch (err) {
+      console.error('Error loading accounts:', err);
+    }
   }
 
   async function handleAddAccount(e: React.FormEvent) {
@@ -62,8 +70,13 @@ export default function AccountsPage() {
         }),
       });
       if (!res.ok) {
-        const err = await res.json();
-        alert(`Error creating account: ${err.error || 'Unknown error'}`);
+        const text = await res.text();
+        try {
+          const err = JSON.parse(text);
+          alert(`Error creating account: ${err.error || 'Unknown error'}`);
+        } catch {
+          alert(`Error creating account: ${res.status} ${res.statusText}`);
+        }
         return;
       }
       setShowForm(false);

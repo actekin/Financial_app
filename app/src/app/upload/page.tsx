@@ -25,7 +25,10 @@ export default function UploadPage() {
   const [isDragging, setIsDragging] = useState(false);
 
   useEffect(() => {
-    fetch('/api/accounts').then(r => r.json()).then(setAccounts);
+    fetch('/api/accounts')
+      .then(r => r.ok ? r.json() : [])
+      .then(data => { if (Array.isArray(data)) setAccounts(data); })
+      .catch(() => {});
   }, []);
 
   const handleFile = useCallback(async (f: File) => {
