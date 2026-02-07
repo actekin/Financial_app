@@ -6,14 +6,14 @@ This document defines the rules and coordination methods for AI coding agents (C
 
 ## Core Rules
 
-1. **One task = one branch = one PR.**
-   Never combine unrelated changes. If a task grows too large, split it into multiple PRs.
+1. **One task = one branch.**
+   Never combine unrelated changes. If a task grows too large, split it into multiple branches.
 
 2. **Never commit directly to `main`.**
-   All changes go through pull requests and must be reviewed before merging.
+   All changes go on feature branches. The human supervisor creates PRs and handles merging.
 
-3. **Keep PRs small.**
-   Smaller PRs are easier to review, less likely to conflict, and faster to merge. If your diff exceeds ~400 lines, consider splitting.
+3. **Keep changes small.**
+   Smaller diffs are easier to review, less likely to conflict, and faster to merge. If your diff exceeds ~400 lines, consider splitting into multiple branches/tasks.
 
 4. **Contracts are law.**
    The following files are authoritative contracts. Code must conform to them, not the other way around:
@@ -23,10 +23,10 @@ This document defines the rules and coordination methods for AI coding agents (C
    - `app/src/lib/db/client.ts` — database schema (inline SQL)
 
 5. **Update docs when behavior changes.**
-   Any PR that changes API endpoints, database schema, configuration, workflows, or user-facing behavior **must** update the corresponding contract files in the same PR.
+   Any branch that changes API endpoints, database schema, configuration, workflows, or user-facing behavior **must** update the corresponding contract files in the same commit(s).
 
-6. **Every PR must include "How to test".**
-   The PR description must contain a section explaining how a reviewer can verify the change. If lint, build, or tests exist, the PR must pass them.
+6. **Every branch must include "How to test".**
+   Add a `## How to test` section at the top of your last commit message explaining how a reviewer can verify the change. If lint, build, or tests exist, the code must pass them.
 
 7. **Branch naming convention:**
    Use descriptive branch names: `feat/<short-desc>`, `fix/<short-desc>`, `docs/<short-desc>`, `refactor/<short-desc>`.
@@ -54,14 +54,22 @@ Agents do **not** share chat memory or session context. Coordination happens ent
 1. Read `TASKS.md` to find an unassigned task in the **Now** section.
 2. Read `SPEC.md`, `API.md`, and `PLAN.md` for relevant context.
 3. Create a branch, implement the change, update contracts if needed.
-4. Open a PR using the PR template (`.github/pull_request_template.md`).
-5. Move the task to **In progress** in `TASKS.md` within your PR.
+4. Commit and push your branch. **Do not open a PR yourself.** The human supervisor will create the PR through their interface.
+5. Move the task to **In progress** in `TASKS.md` within your branch.
 
 ### Avoiding conflicts
 
-- Check `TASKS.md` and open PRs before starting work to avoid duplicating effort.
+- Check `TASKS.md` and open branches/PRs before starting work to avoid duplicating effort.
 - If two tasks touch the same files, note the dependency in `TASKS.md`.
 - Prefer additive changes over modifications to shared code when possible.
+
+### Important: Agents do NOT create PRs
+
+The human supervisor owns the PR workflow. As an agent, your job is to:
+1. Implement on a feature branch.
+2. Commit with clear messages (include "How to test" in the final commit).
+3. Push the branch to the remote.
+The supervisor will then create the PR and manage the review/merge process.
 
 ---
 
