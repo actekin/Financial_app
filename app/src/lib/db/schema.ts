@@ -1,4 +1,5 @@
 import { sqliteTable, text, integer, real, uniqueIndex } from 'drizzle-orm/sqlite-core';
+import { sql } from 'drizzle-orm';
 
 export const accounts = sqliteTable('accounts', {
   id: integer('id').primaryKey({ autoIncrement: true }),
@@ -8,7 +9,7 @@ export const accounts = sqliteTable('accounts', {
   currency: text('currency').notNull(),
   isActive: integer('is_active', { mode: 'boolean' }).notNull().default(true),
   groupName: text('group_name'),
-  createdAt: text('created_at').notNull().default('(datetime(\'now\'))'),
+  createdAt: text('created_at').notNull().default(sql`(datetime('now'))`),
 });
 
 export const transactions = sqliteTable('transactions', {
@@ -28,7 +29,7 @@ export const transactions = sqliteTable('transactions', {
   isTransfer: integer('is_transfer', { mode: 'boolean' }).notNull().default(false),
   excludeFromFlow: integer('exclude_from_flow', { mode: 'boolean' }).notNull().default(false),
   fingerprint: text('fingerprint'),
-  createdAt: text('created_at').notNull().default('(datetime(\'now\'))'),
+  createdAt: text('created_at').notNull().default(sql`(datetime('now'))`),
 });
 
 export const snapshots = sqliteTable('snapshots', {
@@ -54,7 +55,7 @@ export const uploadLogs = sqliteTable('upload_logs', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   accountId: integer('account_id').notNull().references(() => accounts.id),
   filename: text('filename').notNull(),
-  uploadedAt: text('uploaded_at').notNull().default('(datetime(\'now\'))'),
+  uploadedAt: text('uploaded_at').notNull().default(sql`(datetime('now'))`),
   rowsImported: integer('rows_imported').notNull().default(0),
   rowsSkipped: integer('rows_skipped').notNull().default(0),
   dateRangeStart: text('date_range_start'),

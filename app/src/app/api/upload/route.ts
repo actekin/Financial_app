@@ -18,6 +18,7 @@ interface IncomingTransaction {
 }
 
 export async function POST(request: NextRequest) {
+  try {
   const body = await request.json();
   const { accountId, filename, transactions: txns } = body as {
     accountId: number;
@@ -112,4 +113,9 @@ export async function POST(request: NextRequest) {
     skipped,
     dateRange: { start: dateStart, end: dateEnd },
   });
+  } catch (error: unknown) {
+    console.error('Upload error:', error);
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 }

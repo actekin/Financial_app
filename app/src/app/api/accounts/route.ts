@@ -9,22 +9,29 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  const body = await request.json();
-  const { bank, name, type, currency, groupName } = body;
+  try {
+    const body = await request.json();
+    const { bank, name, type, currency, groupName } = body;
 
-  if (!bank || !name || !type || !currency) {
-    return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    if (!bank || !name || !type || !currency) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+
+    const result = db.insert(accounts).values({
+      bank,
+      name,
+      type,
+      currency,
+      groupName: groupName || null,
+      createdAt: new Date().toISOString(),
+    }).returning().get();
+
+    return NextResponse.json(result, { status: 201 });
+  } catch (error: unknown) {
+    console.error('Error creating account:', error);
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
-
-  const result = db.insert(accounts).values({
-    bank,
-    name,
-    type,
-    currency,
-    groupName: groupName || null,
-  }).returning().get();
-
-  return NextResponse.json(result, { status: 201 });
 }
 
 export async function DELETE(request: NextRequest) {

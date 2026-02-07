@@ -49,21 +49,30 @@ export default function AccountsPage() {
   async function handleAddAccount(e: React.FormEvent) {
     e.preventDefault();
     const accountName = name || `${BANK_LABELS[bank]} ${type}`;
-    await fetch('/api/accounts', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        bank,
-        name: accountName,
-        type,
-        currency,
-        groupName: groupName || null,
-      }),
-    });
-    setShowForm(false);
-    setName('');
-    setGroupName('');
-    fetchAccounts();
+    try {
+      const res = await fetch('/api/accounts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          bank,
+          name: accountName,
+          type,
+          currency,
+          groupName: groupName || null,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        alert(`Error creating account: ${err.error || 'Unknown error'}`);
+        return;
+      }
+      setShowForm(false);
+      setName('');
+      setGroupName('');
+      await fetchAccounts();
+    } catch (err) {
+      alert(`Failed to create account: ${err}`);
+    }
   }
 
   async function handleDeleteAccount(id: number) {
