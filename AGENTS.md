@@ -102,6 +102,38 @@ pnpm build
 
 # Lint
 pnpm lint
+
+# Type-check (no emit)
+pnpm typecheck
+
+# Run unit tests (Vitest)
+pnpm test
+
+# Run tests in watch mode during development
+pnpm test:watch
 ```
 
-> **Note:** There are no automated tests yet. Vitest and Playwright are planned but not configured with test files. See `TASKS.md` for the testing task.
+## Quality Gates (CI)
+
+Every PR targeting `main` runs the GitHub Actions workflow in `.github/workflows/ci.yml`:
+
+| Gate        | Command          | Blocking? |
+|-------------|------------------|-----------|
+| Lint        | `pnpm lint`      | No (pre-existing errors; will become blocking once fixed) |
+| Typecheck   | `pnpm typecheck` | **Yes**   |
+| Test        | `pnpm test`      | **Yes**   |
+| Build       | `pnpm build`     | **Yes**   |
+
+Before pushing a branch, verify locally:
+
+```bash
+cd app && pnpm typecheck && pnpm test && pnpm build
+```
+
+### Writing Tests
+
+- Test framework: **Vitest** (config: `app/vitest.config.ts`)
+- Test file pattern: `src/**/*.test.ts`
+- Path alias `@/` resolves to `src/` in tests
+- Place tests in `__tests__/` directories next to the code they test
+- See existing tests in `src/lib/categorizer/__tests__/` and `src/lib/utils/__tests__/` for examples

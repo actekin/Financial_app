@@ -22,7 +22,6 @@ Merge PRs in roughly this order to minimize conflicts. Tasks within the same wav
 
 | ID    | Title                                              | Owner      | Contract Refs              | Dependencies | Key Files Touched                          |
 |-------|----------------------------------------------------|------------|----------------------------|--------------|--------------------------------------------|
-| T015  | Set up Vitest test framework + first smoke test    | unassigned | PLAN §17                   | —            | `package.json`, `vitest.config.ts`         |
 | T001  | Add strand click-to-drill-down panel               | unassigned | SPEC, PLAN §7.2            | —            | `components/sankey/`, new `components/layout/slide-panel.tsx` |
 | T002  | Implement date range selector on dashboard         | unassigned | SPEC, PLAN §9.2            | —            | `app/page.tsx`, `api/sankey/route.ts`      |
 | T006  | Implement currency conversion with exchange rate API | unassigned | PLAN §11, API            | —            | new `lib/currency/`, new `api/exchange-rates/` |
@@ -43,13 +42,12 @@ Merge PRs in roughly this order to minimize conflicts. Tasks within the same wav
 | T012a | Add category breakdown donut chart                 | unassigned | SPEC, PLAN §7.3            | —            | new `components/charts/category-donut.tsx`  |
 | T012b | Add monthly trend line chart                       | unassigned | SPEC, PLAN §7.3            | —            | new `components/charts/monthly-trend.tsx`   |
 | T012c | Add reserves per-account bar chart                 | unassigned | SPEC, PLAN §7.3            | —            | new `components/charts/reserves-bar.tsx`    |
-| T013  | Set up CI pipeline (lint + build + test)           | unassigned | AGENTS                     | T015         | new `.github/workflows/ci.yml`             |
-
 ## In Progress
 
 | ID | Title | Owner | Contract Refs | Dependencies |
 |----|-------|-------|---------------|--------------|
-| —  | —     | —     | —             | —            |
+| T015 | Set up Vitest test framework + first smoke test | QA agent | PLAN §17 | — |
+| T013 | Set up CI pipeline (lint + typecheck + build + test) | QA agent | AGENTS | T015 |
 
 ## Done
 
@@ -67,4 +65,4 @@ Merge PRs in roughly this order to minimize conflicts. Tasks within the same wav
 - **T006** (currency conversion) unblocks T003 (currency switcher UI).
 - **T012a/b/c** are independent of each other but are lower priority than T001–T006. They can start once the core interactive features are underway. Marked as blocked only to keep the "Now" section focused.
 - **T013** (CI) can start as soon as T015 merges; it doesn't need all test tasks complete — it can run `lint + build` first and add `test` once tests exist.
-- Vitest is not yet installed. T015 must `pnpm add -D vitest` and create a config file.
+- Vitest is now installed (`vitest ^4.0.18`). Config is at `app/vitest.config.ts`. Run `pnpm test` to execute. T007/T008/T009 can start immediately once T015 merges.
