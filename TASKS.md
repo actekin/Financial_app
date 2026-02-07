@@ -22,7 +22,6 @@ Merge PRs in roughly this order to minimize conflicts. Tasks within the same wav
 
 | ID    | Title                                              | Owner      | Contract Refs              | Dependencies | Key Files Touched                          |
 |-------|----------------------------------------------------|------------|----------------------------|--------------|--------------------------------------------|
-| T015  | Set up Vitest test framework + first smoke test    | unassigned | PLAN §17                   | —            | `package.json`, `vitest.config.ts`         |
 | T001  | Add strand click-to-drill-down panel               | unassigned | SPEC, PLAN §7.2            | —            | `components/sankey/`, new `components/layout/slide-panel.tsx` |
 | T002  | Implement date range selector on dashboard         | unassigned | SPEC, PLAN §9.2            | —            | `app/page.tsx`, `api/sankey/route.ts`      |
 | T006  | Implement currency conversion with exchange rate API | unassigned | PLAN §11, API            | —            | new `lib/currency/`, new `api/exchange-rates/` |
@@ -47,9 +46,9 @@ Merge PRs in roughly this order to minimize conflicts. Tasks within the same wav
 
 ## In Progress
 
-| ID | Title | Owner | Contract Refs | Dependencies |
-|----|-------|-------|---------------|--------------|
-| —  | —     | —     | —             | —            |
+| ID | Title | Owner | Contract Refs | Dependencies | Branch |
+|----|-------|-------|---------------|--------------|--------|
+| T015 | Set up Vitest test framework + first smoke test | worker | PLAN §17 | — | `claude/worker-agent-setup-3Zgwt` |
 
 ## Done
 
