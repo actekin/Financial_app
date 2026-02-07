@@ -872,9 +872,9 @@ ALTER TABLE accounts ADD COLUMN group_name TEXT; -- e.g., 'Revolut'
 
 This section documents the workflow for AI coding agents working on this repo in parallel.
 
-### PR-Only Workflow
+### Branch-and-Push Workflow
 
-All changes are made via pull requests. No direct commits to `main`. One task = one branch = one PR.
+All changes are made on feature branches and pushed to the remote. The human supervisor creates PRs and merges them — agents do not open PRs themselves. No direct commits to `main`. One task = one branch = one PR.
 
 ### Authoritative Contracts
 
