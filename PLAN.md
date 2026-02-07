@@ -865,3 +865,84 @@ In the UI, these accounts are **visually grouped** under a "Revolut" header:
 ```sql
 ALTER TABLE accounts ADD COLUMN group_name TEXT; -- e.g., 'Revolut'
 ```
+
+---
+
+## 20. Agent Workflow
+
+This section documents the workflow for AI coding agents working on this repo in parallel.
+
+### PR-Only Workflow
+
+All changes are made via pull requests. No direct commits to `main`. One task = one branch = one PR.
+
+### Authoritative Contracts
+
+The following files are the source of truth. Code must conform to them:
+
+| Contract       | File                         | Governs                                 |
+|----------------|------------------------------|-----------------------------------------|
+| Specification  | `SPEC.md`                   | Product goals, acceptance criteria       |
+| API            | `API.md`                    | REST endpoint definitions                |
+| Plan           | `PLAN.md` (this file)       | Architecture, data model, phases         |
+| Schema         | `app/src/lib/db/client.ts`  | Database tables (inline SQL)             |
+
+### Coordination
+
+Agents coordinate through `TASKS.md` (task queue) and PR descriptions/comments. See `AGENTS.md` for full rules.
+
+### Architecture Summary
+
+| Aspect          | Detail                                                |
+|-----------------|-------------------------------------------------------|
+| **Framework**   | Next.js 16 (App Router), TypeScript, Tailwind CSS 4   |
+| **Database**    | SQLite via sql.js (in-memory + file persistence)       |
+| **State**       | Zustand                                                |
+| **Visualization** | D3.js (d3-sankey) + Recharts                        |
+| **CSV parsing** | PapaParse                                              |
+| **Package mgr** | pnpm                                                  |
+
+### Folder Layout
+
+```
+Financial_app/
+├── PLAN.md              # This file — architecture and design
+├── SPEC.md              # Product specification
+├── API.md               # API endpoint reference
+├── TASKS.md             # Task queue for agents
+├── AGENTS.md            # Agent contribution rules
+└── app/                 # Next.js application
+    ├── package.json
+    ├── src/
+    │   ├── app/         # Pages and API routes
+    │   │   ├── page.tsx           # Dashboard (Sankey)
+    │   │   ├── accounts/          # Account management
+    │   │   ├── transactions/      # Transaction list
+    │   │   ├── upload/            # CSV upload
+    │   │   └── api/               # REST endpoints
+    │   │       ├── accounts/
+    │   │       ├── transactions/
+    │   │       ├── upload/
+    │   │       ├── sankey/
+    │   │       └── snapshots/
+    │   ├── lib/
+    │   │   ├── db/client.ts       # SQLite wrapper + schema
+    │   │   ├── parsers/           # 8 bank parsers + generic
+    │   │   ├── categorizer/       # Rule-based categorization
+    │   │   └── utils/             # money, dedup, cn
+    │   ├── components/
+    │   │   ├── sankey/            # D3 Sankey chart
+    │   │   └── layout/            # Sidebar
+    │   └── types/                 # TypeScript type definitions
+    └── public/
+```
+
+### Build & Run Commands
+
+```bash
+cd app
+pnpm install          # Install dependencies
+pnpm dev              # Dev server at http://localhost:3000
+pnpm build            # Production build
+pnpm lint             # ESLint
+```
