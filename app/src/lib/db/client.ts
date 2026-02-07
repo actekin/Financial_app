@@ -23,7 +23,11 @@ function saveDb() {
 async function getDb(): Promise<Database> {
   if (_db) return _db;
 
-  const SQL = await initSqlJs();
+  // Resolve WASM file from real filesystem (Turbopack virtualizes require.resolve)
+  const wasmDir = path.join(process.cwd(), 'node_modules', 'sql.js', 'dist');
+  const SQL = await initSqlJs({
+    locateFile: (file: string) => path.join(wasmDir, file),
+  });
 
   if (fs.existsSync(DB_PATH)) {
     const fileBuffer = fs.readFileSync(DB_PATH);
