@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Bank, Currency, AccountType, BANK_LABELS, Account } from '@/types';
+import { Bank, Currency, AccountType, BANK_LABELS, Account, getBankLabel } from '@/types';
 
 const BANK_OPTIONS = Object.entries(BANK_LABELS).map(([value, label]) => ({ value, label }));
 const CURRENCY_OPTIONS = Object.values(Currency);
@@ -17,15 +17,22 @@ const BANK_DEFAULT_CURRENCIES: Partial<Record<Bank, Currency>> = {
   [Bank.CHASE]: Currency.USD,
   [Bank.LLOYDS]: Currency.GBP,
   [Bank.HSBC]: Currency.GBP,
+  [Bank.AMEX]: Currency.GBP,
   [Bank.QNB_FINANSBANK]: Currency.TRY,
   [Bank.REVOLUT]: Currency.GBP,
   [Bank.TRADING_212]: Currency.GBP,
+};
+
+const BANK_DEFAULT_TYPES: Partial<Record<Bank, AccountType>> = {
+  [Bank.AMEX]: AccountType.CREDIT_CARD,
+  [Bank.TRADING_212]: AccountType.INVESTMENT,
 };
 
 export default function AccountsPage() {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [bank, setBank] = useState<Bank>(Bank.BANK_OF_AMERICA);
+  const [customBankName, setCustomBankName] = useState('');
   const [name, setName] = useState('');
   const [type, setType] = useState<AccountType>(AccountType.CHECKING);
   const [currency, setCurrency] = useState<Currency>(Currency.USD);
@@ -56,13 +63,16 @@ export default function AccountsPage() {
 
   async function handleAddAccount(e: React.FormEvent) {
     e.preventDefault();
-    const accountName = name || `${BANK_LABELS[bank]} ${type}`;
+    // For "Other", use the custom name as the bank value; otherwise use the enum value
+    const bankValue = bank === Bank.OTHER ? (customBankName.trim() || 'other') : bank;
+    const bankLabel = bank === Bank.OTHER ? customBankName.trim() : BANK_LABELS[bank];
+    const accountName = name || `${bankLabel} ${type}`;
     try {
       const res = await fetch('/api/accounts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          bank,
+          bank: bankValue,
           name: accountName,
           type,
           currency,
@@ -81,6 +91,7 @@ export default function AccountsPage() {
       }
       setShowForm(false);
       setName('');
+      setCustomBankName('');
       setGroupName('');
       await fetchAccounts();
     } catch (err) {
@@ -122,9 +133,14 @@ export default function AccountsPage() {
     if (defaultCurrency) setCurrency(defaultCurrency);
     if (newBank === Bank.REVOLUT) setGroupName('Revolut');
     else setGroupName('');
-    if (newBank === Bank.TRADING_212) setType(AccountType.INVESTMENT);
-    else setType(AccountType.CHECKING);
+    setType(BANK_DEFAULT_TYPES[newBank] || AccountType.CHECKING);
+    if (newBank !== Bank.OTHER) setCustomBankName('');
   }
+
+  // Compute placeholder for account name
+  const bankLabel = bank === Bank.OTHER
+    ? (customBankName.trim() || 'Custom Bank')
+    : BANK_LABELS[bank];
 
   // Group accounts by groupName
   const grouped = accounts.reduce<Record<string, Account[]>>((acc, a) => {
@@ -164,6 +180,19 @@ export default function AccountsPage() {
                 ))}
               </select>
             </div>
+            {bank === Bank.OTHER && (
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">Bank Name</label>
+                <input
+                  type="text"
+                  value={customBankName}
+                  onChange={e => setCustomBankName(e.target.value)}
+                  placeholder="e.g. Monzo, N26, Wise..."
+                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500"
+                  required
+                />
+              </div>
+            )}
             <div>
               <label className="block text-sm text-gray-400 mb-1">Account Type</label>
               <select
@@ -194,7 +223,7 @@ export default function AccountsPage() {
                 type="text"
                 value={name}
                 onChange={e => setName(e.target.value)}
-                placeholder={`${BANK_LABELS[bank]} ${type}`}
+                placeholder={`${bankLabel} ${type}`}
                 className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500"
               />
             </div>
@@ -238,7 +267,7 @@ export default function AccountsPage() {
                   <div>
                     <div className="text-sm font-medium text-white">{account.name}</div>
                     <div className="text-xs text-gray-500">
-                      {BANK_LABELS[account.bank as Bank]} &middot; {account.type}
+                      {getBankLabel(account.bank)} &middot; {account.type}
                     </div>
                   </div>
                 </div>

@@ -4,6 +4,7 @@ import { bankOfAmericaParser } from './bank-of-america';
 import { chaseParser } from './chase';
 import { lloydsParser } from './lloyds';
 import { hsbcParser } from './hsbc';
+import { amexParser } from './amex';
 import { qnbFinansbankParser } from './qnb-finansbank';
 import { revolutParser } from './revolut';
 import { trading212Parser } from './trading-212';
@@ -14,6 +15,7 @@ const parsers: StatementParser[] = [
   trading212Parser,
   lloydsParser,
   hsbcParser,
+  amexParser,
   revolutParser,
   bankOfAmericaParser,
   chaseParser,
@@ -26,9 +28,11 @@ const parsersByBank: Record<Bank, StatementParser> = {
   [Bank.CHASE]: chaseParser,
   [Bank.LLOYDS]: lloydsParser,
   [Bank.HSBC]: hsbcParser,
+  [Bank.AMEX]: amexParser,
   [Bank.QNB_FINANSBANK]: qnbFinansbankParser,
   [Bank.REVOLUT]: revolutParser,
   [Bank.TRADING_212]: trading212Parser,
+  [Bank.OTHER]: genericParser,
 };
 
 export function detectParser(headers: string[]): StatementParser | null {

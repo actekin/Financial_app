@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Account, Transaction, BANK_LABELS, Bank, AutoCategory, CATEGORY_LABELS, CATEGORY_COLORS, TransactionDirection } from '@/types';
+import { Account, Transaction, AutoCategory, CATEGORY_LABELS, CATEGORY_COLORS, TransactionDirection } from '@/types';
 import { fromCents } from '@/lib/utils/money';
 
 export default function TransactionsPage() {

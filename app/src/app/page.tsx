@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { SankeyChart } from '@/components/sankey/sankey-chart';
 import { fromCents } from '@/lib/utils/money';
-import { CATEGORY_LABELS, AutoCategory, TransactionDirection, Account, Transaction, BANK_LABELS, Bank } from '@/types';
+import { CATEGORY_LABELS, AutoCategory, TransactionDirection, Account, Transaction, getBankLabel } from '@/types';
 import { ArrowUpRight, ArrowDownRight, Wallet, TrendingUp, X } from 'lucide-react';
 
 interface SankeyData {
@@ -184,7 +184,7 @@ export default function DashboardPage() {
                     </div>
                     <div>
                       <div className="text-sm text-white">{account.name}</div>
-                      <div className="text-xs text-gray-500">{BANK_LABELS[account.bank as Bank]}</div>
+                      <div className="text-xs text-gray-500">{getBankLabel(account.bank)}</div>
                     </div>
                   </div>
                   <div className="text-right">

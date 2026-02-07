@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Papa from 'papaparse';
-import { Bank, Currency, BANK_LABELS, Account, TransactionDirection, AutoCategory, CATEGORY_LABELS } from '@/types';
+import { Bank, Currency, Account, TransactionDirection, AutoCategory, CATEGORY_LABELS, getBankLabel } from '@/types';
 import { Upload, FileText, CheckCircle, AlertCircle, X } from 'lucide-react';
 
 interface ParsedRow {
@@ -93,7 +93,7 @@ export default function UploadPage() {
         // Try various formats
         if (dateStr.includes('/')) {
           const parts = dateStr.split('/');
-          if (bank === Bank.LLOYDS || bank === Bank.HSBC || bank === Bank.REVOLUT) {
+          if (bank === Bank.LLOYDS || bank === Bank.HSBC || bank === Bank.AMEX || bank === Bank.REVOLUT) {
             // DD/MM/YYYY
             date = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
           } else {
@@ -247,7 +247,7 @@ export default function UploadPage() {
             <option value="">Choose an account...</option>
             {accounts.map(a => (
               <option key={a.id} value={a.id}>
-                {a.name} ({BANK_LABELS[a.bank as Bank]} · {a.currency})
+                {a.name} ({getBankLabel(a.bank)} · {a.currency})
               </option>
             ))}
           </select>

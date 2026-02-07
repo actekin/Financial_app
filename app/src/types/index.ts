@@ -3,9 +3,11 @@ export enum Bank {
   CHASE = 'chase',
   LLOYDS = 'lloyds',
   HSBC = 'hsbc',
+  AMEX = 'amex',
   QNB_FINANSBANK = 'qnb_finansbank',
   REVOLUT = 'revolut',
   TRADING_212 = 'trading_212',
+  OTHER = 'other',
 }
 
 export enum Currency {
@@ -61,10 +63,17 @@ export const BANK_LABELS: Record<Bank, string> = {
   [Bank.CHASE]: 'Chase',
   [Bank.LLOYDS]: 'Lloyds',
   [Bank.HSBC]: 'HSBC',
+  [Bank.AMEX]: 'American Express',
   [Bank.QNB_FINANSBANK]: 'QNB Finansbank',
   [Bank.REVOLUT]: 'Revolut',
   [Bank.TRADING_212]: 'Trading 212',
+  [Bank.OTHER]: 'Other',
 };
+
+// Get display label for any bank value (predefined or custom)
+export function getBankLabel(bank: string): string {
+  return BANK_LABELS[bank as Bank] || bank;
+}
 
 export const CURRENCY_SYMBOLS: Record<Currency, string> = {
   [Currency.USD]: '$',
@@ -133,7 +142,7 @@ export const CATEGORY_COLORS: Record<AutoCategory, string> = {
 
 export interface Account {
   id: number;
-  bank: Bank;
+  bank: string;
   name: string;
   type: AccountType;
   currency: Currency;
