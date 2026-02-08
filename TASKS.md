@@ -25,7 +25,6 @@ Merge PRs in roughly this order to minimize conflicts. Tasks within the same wav
 | T001  | Add strand click-to-drill-down panel               | unassigned | SPEC, PLAN §7.2            | —            | `components/sankey/`, new `components/layout/slide-panel.tsx` |
 | T002  | Implement date range selector on dashboard         | unassigned | SPEC, PLAN §9.2            | —            | `app/page.tsx`, `api/sankey/route.ts`      |
 | T006  | Implement currency conversion with exchange rate API | unassigned | PLAN §11, API            | —            | new `lib/currency/`, new `api/exchange-rates/` |
-| T010  | Add single-account CRUD endpoints (`/api/accounts/[id]`) | unassigned | API, PLAN §8.2      | —            | new `api/accounts/[id]/route.ts`           |
 | T011  | Add single-transaction endpoints (`/api/transactions/[id]`) | unassigned | API, PLAN §8.2    | —            | new `api/transactions/[id]/route.ts`       |
 | T014  | Add inter-account transfer detection               | unassigned | PLAN §14, API              | —            | new `lib/utils/transfers.ts`, `api/upload/route.ts` |
 
@@ -46,6 +45,7 @@ Merge PRs in roughly this order to minimize conflicts. Tasks within the same wav
 
 | ID | Title | Owner | Contract Refs | Dependencies |
 |----|-------|-------|---------------|--------------|
+| T010 | Add single-account CRUD endpoints (`/api/accounts/[id]`) | worker | API, PLAN §8.2 | — |
 | T015 | Set up Vitest test framework + first smoke test | QA agent | PLAN §17 | — |
 | T013 | Set up CI pipeline (lint + typecheck + build + test) | QA agent | AGENTS | T015 |
 
