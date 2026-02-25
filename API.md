@@ -61,6 +61,50 @@ Delete an account by ID.
 
 ---
 
+### `GET /api/accounts/[id]`
+
+Get a single account by ID.
+
+**Response:** `200 OK` — the account object.
+
+**Errors:**
+- `400` — Invalid account id (non-numeric)
+- `404` — Account not found
+
+### `PUT /api/accounts/[id]`
+
+Update a single account.
+
+**Request body** (all fields optional, at least one required):
+```json
+{
+  "bank": "lloyds",
+  "name": "Lloyds Current",
+  "type": "checking",
+  "currency": "GBP",
+  "groupName": null,
+  "isActive": true
+}
+```
+
+**Response:** `200 OK` — the updated account object.
+
+**Errors:**
+- `400` — Invalid account id or no fields to update
+- `404` — Account not found
+
+### `DELETE /api/accounts/[id]`
+
+Delete a single account and all related data (transactions, snapshots, upload logs).
+
+**Response:** `200 OK` — `{ "success": true }`
+
+**Errors:**
+- `400` — Invalid account id
+- `404` — Account not found
+
+---
+
 ### `GET /api/transactions`
 
 List transactions with optional filters.
@@ -211,7 +255,6 @@ These endpoints are defined in `PLAN.md` but not yet implemented:
 
 | Endpoint                        | Purpose                                    |
 |---------------------------------|--------------------------------------------|
-| `GET/PUT/DELETE /api/accounts/[id]` | Single account read/update/delete       |
 | `GET/PUT/DELETE /api/transactions/[id]` | Single transaction operations        |
 | `POST /api/transactions/categorize` | Re-run auto-categorization on existing data |
 | `CRUD /api/labels`              | Label/strand management                    |
