@@ -10,7 +10,8 @@
 //
 // Env vars: FINFLOW_URL (default http://localhost:3000),
 //           FINFLOW_PASSWORD (default "demo"), FINFLOW_NAME (default "Demo").
-// Safe to re-run: transaction dedup skips duplicates, snapshots upsert.
+// Safe to re-run: existing accounts are reused by name, transaction dedup
+// skips duplicates, snapshots upsert.
 
 const BASE = process.env.FINFLOW_URL || 'http://localhost:3000';
 const PASSWORD = process.env.FINFLOW_PASSWORD || 'demo';
@@ -43,11 +44,18 @@ async function main() {
     console.log('Auth disabled — seeding without sign-in');
   }
 
-  const chase = (await req('/api/accounts', { bank: 'chase', name: 'Chase Checking', type: 'checking', currency: 'USD' })).id;
-  const lloyds = (await req('/api/accounts', { bank: 'lloyds', name: 'Lloyds Current', type: 'checking', currency: 'GBP' })).id;
-  const revolut = (await req('/api/accounts', { bank: 'revolut', name: 'Revolut GBP', type: 'checking', currency: 'GBP', groupName: 'Revolut' })).id;
-  const t212 = (await req('/api/accounts', { bank: 'trading_212', name: 'Trading 212 ISA', type: 'investment', currency: 'GBP' })).id;
-  console.log('Created accounts', { chase, lloyds, revolut, t212 });
+  // Reuse accounts by name so re-running the script doesn't duplicate them
+  const existing = await req('/api/accounts');
+  const ensureAccount = async (spec) => {
+    const found = existing.find(a => a.name === spec.name);
+    return found ? found.id : (await req('/api/accounts', spec)).id;
+  };
+
+  const chase = await ensureAccount({ bank: 'chase', name: 'Chase Checking', type: 'checking', currency: 'USD' });
+  const lloyds = await ensureAccount({ bank: 'lloyds', name: 'Lloyds Current', type: 'checking', currency: 'GBP' });
+  const revolut = await ensureAccount({ bank: 'revolut', name: 'Revolut GBP', type: 'checking', currency: 'GBP', groupName: 'Revolut' });
+  const t212 = await ensureAccount({ bank: 'trading_212', name: 'Trading 212 ISA', type: 'investment', currency: 'GBP' });
+  console.log('Accounts', { chase, lloyds, revolut, t212 });
 
   const chaseTxns = [];
   for (const m of ['03', '04', '05']) {
