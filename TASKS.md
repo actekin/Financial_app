@@ -53,7 +53,9 @@ Merge PRs in roughly this order to minimize conflicts. Tasks within the same wav
 
 | ID | Title | Owner | Contract Refs | Dependencies |
 |----|-------|-------|---------------|--------------|
-| —  | —     | —     | —             | —            |
+| T016 | Shared household auth (login, sessions, attribution) | worker | SPEC, API, PLAN §18 | — |
+| T017 | Quick Update page + freshness API + batch snapshots | worker | SPEC, API | — |
+| T018 | Multi-file CSV upload + dashboard staleness warnings | worker | SPEC, API | — |
 
 ---
 

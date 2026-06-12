@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db/client';
 import { toCents } from '@/lib/utils/money';
+import { getSessionFromRequest } from '@/lib/auth/session';
 
 export async function GET(request: NextRequest) {
   try {
@@ -29,6 +30,8 @@ export async function POST(request: NextRequest) {
     }
 
     const balanceCents = toCents(balance);
+    const session = await getSessionFromRequest(request);
+    const updatedBy = session?.name ?? null;
 
     // Upsert: if a snapshot exists for this account+date, update it
     const existing = await db.get(
@@ -38,15 +41,15 @@ export async function POST(request: NextRequest) {
 
     if (existing) {
       await db.run(
-        'UPDATE snapshots SET balance = ?, currency = ?, source = ? WHERE id = ?',
-        [balanceCents, currency, source || 'manual', existing.id]
+        `UPDATE snapshots SET balance = ?, currency = ?, source = ?, updated_by = ?, updated_at = datetime('now') WHERE id = ?`,
+        [balanceCents, currency, source || 'manual', updatedBy, existing.id]
       );
       return NextResponse.json({ ...existing, balance: balanceCents });
     }
 
     const result = await db.run(
-      'INSERT INTO snapshots (account_id, date, balance, currency, source) VALUES (?, ?, ?, ?, ?)',
-      [accountId, date, balanceCents, currency, source || 'manual']
+      `INSERT INTO snapshots (account_id, date, balance, currency, source, updated_by, updated_at) VALUES (?, ?, ?, ?, ?, ?, datetime('now'))`,
+      [accountId, date, balanceCents, currency, source || 'manual', updatedBy]
     );
 
     return NextResponse.json({

@@ -75,7 +75,9 @@ async function getDb(): Promise<Database> {
       date TEXT NOT NULL,
       balance INTEGER NOT NULL,
       currency TEXT NOT NULL,
-      source TEXT NOT NULL DEFAULT 'manual'
+      source TEXT NOT NULL DEFAULT 'manual',
+      updated_by TEXT,
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
 
     CREATE TABLE IF NOT EXISTS exchange_rates (
@@ -96,7 +98,8 @@ async function getDb(): Promise<Database> {
       rows_skipped INTEGER NOT NULL DEFAULT 0,
       date_range_start TEXT,
       date_range_end TEXT,
-      status TEXT NOT NULL DEFAULT 'completed'
+      status TEXT NOT NULL DEFAULT 'completed',
+      uploaded_by TEXT
     );
 
     CREATE INDEX IF NOT EXISTS idx_transactions_account ON transactions(account_id);
@@ -104,6 +107,21 @@ async function getDb(): Promise<Database> {
     CREATE INDEX IF NOT EXISTS idx_transactions_fingerprint ON transactions(fingerprint);
     CREATE INDEX IF NOT EXISTS idx_snapshots_account ON snapshots(account_id);
   `);
+
+  // Migrations for databases created before these columns existed.
+  // sql.js has no IF NOT EXISTS for columns, so ignore "duplicate column" errors.
+  const migrations = [
+    "ALTER TABLE snapshots ADD COLUMN updated_by TEXT",
+    "ALTER TABLE snapshots ADD COLUMN updated_at TEXT",
+    "ALTER TABLE upload_logs ADD COLUMN uploaded_by TEXT",
+  ];
+  for (const migration of migrations) {
+    try {
+      _db.run(migration);
+    } catch {
+      // Column already exists
+    }
+  }
 
   saveDb();
   return _db;

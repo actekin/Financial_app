@@ -3,6 +3,7 @@ import { db } from '@/lib/db/client';
 import { categorizeTransaction } from '@/lib/categorizer/engine';
 import { transactionFingerprint } from '@/lib/utils/dedup';
 import { toCents } from '@/lib/utils/money';
+import { getSessionFromRequest } from '@/lib/auth/session';
 import { TransactionDirection } from '@/types';
 
 interface IncomingTransaction {
@@ -99,10 +100,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Log the upload
+    const session = await getSessionFromRequest(request);
     await db.run(
-      `INSERT INTO upload_logs (account_id, filename, rows_imported, rows_skipped, date_range_start, date_range_end)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [accountId, filename || 'upload', imported, skipped, dateStart, dateEnd]
+      `INSERT INTO upload_logs (account_id, filename, rows_imported, rows_skipped, date_range_start, date_range_end, uploaded_by)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [accountId, filename || 'upload', imported, skipped, dateStart, dateEnd, session?.name ?? null]
     );
 
     return NextResponse.json({

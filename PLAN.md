@@ -812,7 +812,7 @@ This avoids floating-point errors in aggregation. Display formatting divides by 
 - No data leaves the device in v0 (no cloud, no analytics, no telemetry)
 - Statement files are parsed client-side; raw files are not persisted
 - When LLM categorization is added (v2), only transaction descriptions are sent (no account numbers, no balances)
-- No authentication needed in v0 (single-user, local app)
+- Optional shared-household auth: setting `FINFLOW_PASSWORD` gates every page and API route behind a sign-in (HMAC-signed session cookie, enforced in `app/src/proxy.ts`). Each household member signs in with their own name, which is recorded on uploads (`upload_logs.uploaded_by`) and balance snapshots (`snapshots.updated_by`). Unset, the app behaves as before (single-user, no auth).
 
 ---
 

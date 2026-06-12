@@ -4,7 +4,7 @@
 
 - **Base path:** `/api`
 - **Framework:** Next.js App Router route handlers (`app/src/app/api/`)
-- **Auth:** None (local-first, single-user app)
+- **Auth:** Optional shared-household password. When the `FINFLOW_PASSWORD` env var is set, all endpoints except `POST /api/auth/login` require a valid `finflow_session` cookie (enforced centrally in `app/src/proxy.ts`); unauthenticated API calls get `401 {"error":"Unauthorized"}` and page requests redirect to `/login`. When the env var is unset, auth is disabled (local single-user mode).
 - **Content-Type:** `application/json` for all request/response bodies
 - **Error shape:** `{ "error": "<message>" }` with appropriate HTTP status code
 - **Amounts:** Stored and returned as integers in smallest currency unit (cents/pence/kuruş). Clients divide by 100 for display.
@@ -13,6 +13,33 @@
 ---
 
 ## Endpoints
+
+### `POST /api/auth/login`
+
+Sign in with the shared household password. Public (no session required).
+
+**Request body:**
+```json
+{ "name": "Arda", "password": "household-password" }
+```
+
+`name` identifies which household member is signing in and is recorded on uploads and snapshots (`uploadedBy` / `updatedBy`).
+
+**Response:** `200 OK` — `{ "name": "Arda" }`, sets the `finflow_session` HTTP-only cookie (valid 90 days).
+
+**Errors:**
+- `400` — Auth not enabled, or missing/too-long name
+- `401` — Incorrect password
+
+### `POST /api/auth/logout`
+
+Clear the session cookie. **Response:** `200 OK` — `{ "success": true }`
+
+### `GET /api/auth/me`
+
+Get the current session. **Response:** `200 OK` — `{ "authEnabled": true, "name": "Arda" }` (`name` is `null` when signed out; `authEnabled` is `false` when `FINFLOW_PASSWORD` is unset).
+
+---
 
 ### `GET /api/accounts`
 
@@ -166,6 +193,7 @@ Import transactions from a parsed CSV file.
 - `amount` is a decimal (e.g., `5.50`); the server converts to cents.
 - Deduplication is automatic via fingerprint hashing.
 - Auto-categorization runs on each transaction during import.
+- When auth is enabled, the signed-in user's name is recorded as `uploaded_by` on the upload log.
 
 **Response:** `200 OK`
 ```json
@@ -244,8 +272,52 @@ Create or update (upsert) an account balance snapshot.
 **Notes:**
 - `balance` is a decimal; the server converts to cents.
 - If a snapshot already exists for the same `accountId` + `date`, it is updated (upsert).
+- When auth is enabled, the signed-in user's name is recorded as `updatedBy`.
 
 **Response:** `201 Created` (new) or `200 OK` (updated) — the snapshot object.
+
+### `POST /api/snapshots/batch`
+
+Upsert balance snapshots for many accounts in one request (powers the Quick Update page).
+
+**Request body:**
+```json
+{
+  "snapshots": [
+    { "accountId": 1, "date": "2026-06-12", "balance": 1500.25, "currency": "USD" },
+    { "accountId": 2, "date": "2026-06-12", "balance": 820.10 }
+  ]
+}
+```
+
+**Notes:**
+- `currency` is optional; defaults to the account's currency.
+- Same upsert semantics as `POST /api/snapshots`, applied per entry.
+- Invalid entries are reported in `errors` without failing the batch.
+
+**Response:** `200 OK` — `{ "saved": 2, "errors": [] }`
+
+---
+
+### `GET /api/freshness`
+
+Per-account data freshness — when each active account last received a transaction, balance snapshot, or upload. Powers the Quick Update page and the dashboard's stale-data warning.
+
+**Response:** `200 OK`
+```json
+[
+  {
+    "account": { "id": 1, "name": "Chase Checking", "bank": "chase", "currency": "USD" },
+    "latestSnapshot": { "date": "2026-06-12", "balance": 150025, "currency": "USD", "source": "manual", "updatedBy": "Arda", "updatedAt": "2026-06-12 15:13:18" },
+    "lastTransactionDate": "2026-06-10",
+    "transactionCount": 42,
+    "lastUpload": { "uploadedAt": "2026-06-12 15:13:18", "filename": "chase_jun.csv", "uploadedBy": "Arda" },
+    "lastDataDate": "2026-06-12"
+  }
+]
+```
+
+`lastDataDate` is the most recent of the snapshot date and last transaction date — the date through which the account's picture is accurate. Fields are `null` when no data exists.
 
 ---
 

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { SankeyChart } from '@/components/sankey/sankey-chart';
 import { fromCents } from '@/lib/utils/money';
 import { CATEGORY_LABELS, AutoCategory, TransactionDirection, Account, Transaction, getBankLabel } from '@/types';
-import { ArrowUpRight, ArrowDownRight, Wallet, TrendingUp, X } from 'lucide-react';
+import { ArrowUpRight, ArrowDownRight, Wallet, TrendingUp, X, Zap } from 'lucide-react';
 
 interface SankeyData {
   nodes: Array<{ id: string; label: string; type: string; value?: number; color?: string }>;
@@ -19,6 +19,21 @@ interface SankeyData {
   accounts: Array<Account & { startBalance: number; endBalance: number }>;
 }
 
+interface FreshnessEntry {
+  account: Account;
+  lastDataDate: string | null;
+  latestSnapshot: { date: string; updatedBy: string | null } | null;
+}
+
+const STALE_AFTER_DAYS = 7;
+
+function dataAgeDays(dateStr: string | null): number | null {
+  if (!dateStr) return null;
+  const then = new Date(dateStr.slice(0, 10) + 'T00:00:00');
+  if (isNaN(then.getTime())) return null;
+  return Math.max(0, Math.floor((Date.now() - then.getTime()) / 86_400_000));
+}
+
 export default function DashboardPage() {
   const [startDate, setStartDate] = useState(() => {
     const d = new Date();
@@ -31,10 +46,18 @@ export default function DashboardPage() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [categoryTransactions, setCategoryTransactions] = useState<Transaction[]>([]);
   const [panelLoading, setPanelLoading] = useState(false);
+  const [freshness, setFreshness] = useState<FreshnessEntry[]>([]);
 
   useEffect(() => {
     fetchSankey();
   }, [startDate, endDate]);
+
+  useEffect(() => {
+    fetch('/api/freshness')
+      .then(r => (r.ok ? r.json() : []))
+      .then(data => { if (Array.isArray(data)) setFreshness(data); })
+      .catch(() => {});
+  }, []);
 
   async function fetchSankey() {
     setLoading(true);
@@ -66,6 +89,12 @@ export default function DashboardPage() {
   const summary = sankeyData?.summary;
   const hasData = sankeyData && sankeyData.nodes.length > 0 && sankeyData.links.length > 0;
 
+  const staleAccounts = freshness.filter(f => {
+    const age = dataAgeDays(f.lastDataDate);
+    return age === null || age > STALE_AFTER_DAYS;
+  });
+  const freshnessByAccountId = new Map(freshness.map(f => [f.account.id, f]));
+
   return (
     <div className="p-8">
       <div className="flex items-center justify-between mb-8">
@@ -94,6 +123,23 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* Stale data warning */}
+      {staleAccounts.length > 0 && freshness.length > 0 && (
+        <div className="mb-6 bg-yellow-950/30 border border-yellow-900 rounded-xl p-4 flex items-center justify-between gap-4">
+          <p className="text-sm text-yellow-300">
+            {staleAccounts.length === freshness.length
+              ? 'Your accounts have no recent data — this snapshot may be out of date.'
+              : `${staleAccounts.length} of ${freshness.length} accounts ${staleAccounts.length === 1 ? 'has' : 'have'} no data from the last ${STALE_AFTER_DAYS} days: ${staleAccounts.slice(0, 4).map(f => f.account.name).join(', ')}${staleAccounts.length > 4 ? '…' : ''}.`}
+          </p>
+          <a
+            href="/quick-update"
+            className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 bg-yellow-600 hover:bg-yellow-700 text-white text-xs rounded-lg transition-colors"
+          >
+            <Zap className="w-3.5 h-3.5" /> Quick Update
+          </a>
+        </div>
+      )}
 
       {/* Summary Cards */}
       {summary && (
@@ -176,6 +222,8 @@ export default function DashboardPage() {
               const startBal = fromCents(account.startBalance);
               const endBal = fromCents(account.endBalance);
               const delta = endBal - startBal;
+              const fresh = freshnessByAccountId.get(account.id);
+              const age = fresh ? dataAgeDays(fresh.lastDataDate) : null;
               return (
                 <div key={account.id} className="flex items-center justify-between py-2 border-b border-gray-800/50 last:border-0">
                   <div className="flex items-center gap-3">
@@ -184,7 +232,18 @@ export default function DashboardPage() {
                     </div>
                     <div>
                       <div className="text-sm text-white">{account.name}</div>
-                      <div className="text-xs text-gray-500">{getBankLabel(account.bank)}</div>
+                      <div className="text-xs text-gray-500">
+                        {getBankLabel(account.bank)}
+                        {fresh && (
+                          age === null ? (
+                            <span className="text-red-400"> · no data</span>
+                          ) : age > STALE_AFTER_DAYS ? (
+                            <span className="text-yellow-400"> · data from {age}d ago</span>
+                          ) : (
+                            <span> · updated {age === 0 ? 'today' : `${age}d ago`}</span>
+                          )
+                        )}
+                      </div>
                     </div>
                   </div>
                   <div className="text-right">
