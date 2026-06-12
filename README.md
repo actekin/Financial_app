@@ -23,6 +23,8 @@ pnpm typecheck    # TypeScript check
 pnpm test         # Vitest unit tests
 ```
 
+**Demo data:** with the server running, `node scripts/seed-demo.mjs` (from `app/`) seeds 4 accounts, ~76 transactions, and balance snapshots so you can explore the dashboard, Quick Update, and upload flows immediately. Configure with `FINFLOW_URL`, `FINFLOW_PASSWORD`, `FINFLOW_NAME`. Safe to re-run.
+
 ## Shared Household Access
 
 By default the app runs unprotected for single-user local use. To share it with a partner:

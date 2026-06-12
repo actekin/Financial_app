@@ -5,8 +5,10 @@ import {
   verifySessionToken,
 } from '@/lib/auth/session';
 
-// Paths reachable without a session (the login flow itself).
-const PUBLIC_PATHS = ['/login', '/api/auth/login'];
+// Paths reachable without a session: the login flow itself, plus the
+// session-info endpoint (it only reveals whether auth is enabled and the
+// caller's own session name).
+const PUBLIC_PATHS = ['/login', '/api/auth/login', '/api/auth/me'];
 
 export default async function proxy(request: NextRequest) {
   if (!isAuthEnabled()) return NextResponse.next();
