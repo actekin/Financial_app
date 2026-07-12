@@ -1,6 +1,7 @@
 import { Bank, Currency, TransactionDirection } from '@/types';
 import { StatementParser, ParsedTransaction } from './types';
 import { parseAmount, getCol } from './utils';
+import { parseUSDate, parseUKDate, parseTurkishDate, parseISODate } from './utils';
 
 // Generic parser for unmapped banks — user provides column mapping
 export interface ColumnMapping {
@@ -18,8 +19,6 @@ export function parseWithMapping(
   mapping: ColumnMapping,
   currency: Currency
 ): ParsedTransaction[] {
-  const { parseUSDate, parseUKDate, parseTurkishDate, parseISODate } = require('./utils');
-
   const dateParsers = {
     US: parseUSDate,
     UK: parseUKDate,

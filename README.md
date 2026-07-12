@@ -1,8 +1,14 @@
-# FinFlow — Personal Finance Dashboard
+# FinFlow — Household Finance Dashboard
 
-A local-first, browser-based personal finance app that ingests bank statements (CSV), auto-categorizes transactions, and visualizes money flows as an interactive Sankey diagram.
+A self-hosted finance app for two: ingest bank statements (CSV), auto-categorize transactions, visualize money flows as an interactive Sankey diagram, set savings goals together, and ask an AI advisor questions like *"does the business-class upgrade make sense this month?"* — answered from your real cash position, live spending data, and saving targets, with supporting charts.
 
-See `PLAN.md` for full architecture and design. See `SPEC.md` for product requirements.
+## Features
+
+- **Dashboard** — cash position, income/spending this month vs your trailing average, monthly spending trend, savings goals at a glance, and the Sankey flow diagram with click-to-drill-down.
+- **AI Advisor** — natural-language Q&A grounded in your live data. Every answer comes with a verdict (go for it / hold off / tight), plain-language reasoning citing your numbers, and the charts that support it. Powered by Claude (`ANTHROPIC_API_KEY` required).
+- **Savings goals** — set targets with deadlines, log contributions manually or link a goal to an account so it tracks the balance automatically; see the required monthly saving to stay on track.
+- **Statement import** — CSV parsers for 8 banks (BoA, Chase, Lloyds, HSBC, Amex, QNB Finansbank, Revolut, Trading 212) plus a generic fallback, with dedup and rule-based auto-categorization.
+- **Household access** — shared-password login (`APP_PASSWORD`) with per-person names, signed session cookies, and a mobile-friendly layout so both of you can use it from any device.
 
 ## Developer Quickstart
 
@@ -10,18 +16,26 @@ See `PLAN.md` for full architecture and design. See `SPEC.md` for product requir
 
 ```bash
 cd app
+cp .env.example .env.local   # optional: set APP_PASSWORD / ANTHROPIC_API_KEY
 pnpm install
-pnpm dev          # http://localhost:3000
+pnpm dev                     # http://localhost:3000
 ```
+
+Without `APP_PASSWORD`, auth is disabled (open local dev). Without `ANTHROPIC_API_KEY`, everything works except the Advisor's natural-language answers (its charts still render).
 
 **Other commands:**
 
 ```bash
 pnpm build        # Production build
+pnpm start        # Run the production build
 pnpm lint         # ESLint
+pnpm typecheck    # TypeScript
+pnpm test         # Vitest
 ```
 
-**Note:** There are no automated tests yet. See `TASKS.md` (T007–T009) for planned test setup.
+## Deploying for your household
+
+See **[DEPLOYMENT.md](DEPLOYMENT.md)** — one container + one persistent volume. Covers Fly.io, Railway/Render, and home-server Docker Compose, plus backups.
 
 ## For AI Agents
 

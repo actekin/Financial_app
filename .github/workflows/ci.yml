@@ -31,11 +31,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # Lint reports issues but does not block yet (pre-existing errors).
-      # Remove continue-on-error once existing lint issues are fixed.
       - name: Lint
         run: pnpm lint
-        continue-on-error: true
 
       - name: Typecheck
         run: pnpm typecheck

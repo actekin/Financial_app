@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 import Papa from 'papaparse';
-import { Bank, Currency, Account, TransactionDirection, AutoCategory, CATEGORY_LABELS, getBankLabel } from '@/types';
+import { Bank, Currency, Account, TransactionDirection, getBankLabel } from '@/types';
 import { Upload, FileText, CheckCircle, AlertCircle, X } from 'lucide-react';
 
 interface ParsedRow {
@@ -210,7 +211,7 @@ export default function UploadPage() {
       });
       const data = await res.json();
       setResult(data);
-    } catch (err) {
+    } catch {
       setParseError('Upload failed. Please try again.');
     } finally {
       setUploading(false);
@@ -225,9 +226,9 @@ export default function UploadPage() {
   }
 
   return (
-    <div className="p-8 max-w-5xl">
-      <h1 className="text-2xl font-bold text-white mb-2">Upload Statements</h1>
-      <p className="text-gray-400 text-sm mb-8">Import CSV bank statements to start tracking your finances</p>
+    <div className="p-4 md:p-8 max-w-5xl">
+      <h1 className="text-2xl font-bold text-white tracking-tight mb-1">Upload Statements</h1>
+      <p className="text-gray-500 text-sm mb-8">Import CSV bank statements to keep your data fresh — duplicates are skipped automatically</p>
 
       {/* Step 1: Select Account */}
       <div className="mb-6">
@@ -393,12 +394,12 @@ export default function UploadPage() {
               >
                 Upload Another
               </button>
-              <a
+              <Link
                 href="/"
                 className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors inline-block"
               >
                 View Dashboard
-              </a>
+              </Link>
             </div>
           </div>
         </div>

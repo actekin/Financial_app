@@ -249,6 +249,40 @@ Create or update (upsert) an account balance snapshot.
 
 ---
 
+### `GET /api/goals`
+
+Returns all savings goals enriched with computed progress: `savedAmount` (from the linked account balance when `linkedAccountId` is set, otherwise the stored manual value), `progressPct`, `remainingAmount`, `monthsLeft`, and `requiredMonthlySaving`.
+
+### `POST /api/goals`
+
+Create a goal. Body (amounts in major units, converted to cents server-side): `{ name, emoji?, targetAmount, savedAmount?, currency, targetDate?, linkedAccountId?, notes? }` → `201` with the row.
+
+### `PUT /api/goals/[id]`
+
+Partial update; same fields as create. Also accepts `addContribution` (major units, may be negative) to increment `savedAmount` atomically. → `200` with the row.
+
+### `DELETE /api/goals/[id]`
+
+→ `{ "success": true }` or `404`.
+
+---
+
+### `GET /api/advisor/context`
+
+Returns the computed `FinancialContext`: per-account balances and totals by currency, a 13-point monthly income/spending series in the primary currency, current-month stats (projected spend, trailing averages, % vs average), category comparisons, largest expenses this month, and goal progress.
+
+### `POST /api/advisor`
+
+Body: `{ question: string, history?: [{role, content}] }`. Builds the financial context, asks Claude, and returns `{ advice: { verdict, headline, reasoning, chartKeys }, context }`. Returns `503` with a helpful message (and the `context`) when `ANTHROPIC_API_KEY` is not configured.
+
+---
+
+### Auth — `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/auth/me`
+
+Enabled when `APP_PASSWORD` is set. `login` body: `{ name, password }` → sets a signed, httpOnly session cookie (30 days). `me` → `{ authEnabled, user, members }`. All other routes and pages require the cookie via `middleware.ts` when auth is enabled.
+
+---
+
 ## Planned Endpoints (TODO)
 
 These endpoints are defined in `PLAN.md` but not yet implemented:

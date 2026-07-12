@@ -6,13 +6,12 @@ FinFlow is a local-first, browser-based personal finance dashboard that ingests 
 
 ## Non-Goals
 
-- **Not a budgeting app.** No budget-setting or alerting in the MVP. (Planned for Phase 2.)
-- **Not a bank connector.** No Plaid/Open Banking integration in the MVP. (Planned for Phase 3.)
-- **Not multi-user.** No authentication, user accounts, or sharing in the MVP.
-- **Not cloud-hosted.** No remote database, cloud sync, or server deployment in the MVP.
-- **Not mobile-first.** Desktop viewport (≥1024px) is the target. Mobile is Phase 3.
-- **No PDF parsing.** CSV-only for the MVP. PDF support is Phase 1.
-- **No LLM categorization.** Rule-based engine only for the MVP. LLM upgrade is Phase 2.
+- **Not a bank connector.** No Plaid/Open Banking integration. (Planned for Phase 3.)
+- **No per-user data separation.** Household members share one dataset behind one shared password (`APP_PASSWORD`); there are no individual accounts or permissions.
+- **No PDF parsing.** CSV-only for now.
+- **No LLM categorization.** Rule-based engine only; the LLM powers the advisor, not import categorization.
+
+> Shipped beyond the original MVP scope: shared-password auth with sessions, single-container deployment (Dockerfile + guide), savings goals, the AI advisor, dashboard charts, and a mobile-responsive layout.
 
 ## Core User Flows
 
@@ -33,6 +32,11 @@ FinFlow is a local-first, browser-based personal finance dashboard that ingests 
 - [x] Transactions are auto-categorized by a regex rule engine on import
 - [x] The dashboard renders a Sankey diagram from transaction data
 - [x] Sankey API computes nodes and links grouped by category and direction
+- [x] Household members sign in with a shared password; sessions persist 30 days per device
+- [x] User can create savings goals (manual contributions or linked to an account balance) with target dates and required-monthly-saving guidance
+- [x] User can ask the AI advisor natural-language money questions and get a verdict + reasoning + supporting charts computed from live data
+- [x] Dashboard shows cash position, current month vs trailing-average tracking, monthly spending trend, and goal progress
+- [x] App ships with a Dockerfile and deployment guide for live household access
 - [ ] TODO: Clicking a Sankey strand opens a detail panel with the underlying transactions
 - [ ] TODO: User can relabel a transaction's category from the detail panel
 - [ ] TODO: Date range selector filters the Sankey and transaction views

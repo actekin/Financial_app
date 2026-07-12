@@ -25,23 +25,24 @@ export async function GET(request: NextRequest) {
       [startDate, endDate]
     );
 
-    // Get snapshots for start date (closest before or on start date)
-    const startSnapshots = await db.all(
-      'SELECT * FROM snapshots WHERE date <= ?',
-      [startDate]
-    );
-
-    // Group snapshots by account (take latest before start date)
+    // Starting balance per account = latest snapshot on/before the start date,
+    // rolled forward with every transaction between the snapshot and the start
+    // date (otherwise stale snapshots understate the opening reserves).
     const startBalances: Record<number, number> = {};
-    for (const snap of startSnapshots) {
-      const snapAccountId = snap.accountId as number;
-      const snapDate = snap.date as string;
-      const snapBalance = snap.balance as number;
-      if (!startBalances[snapAccountId] || snapDate >= (startSnapshots.find(
-        s => (s.accountId as number) === snapAccountId && (s.id as number) !== (snap.id as number)
-      )?.date as string || '')) {
-        startBalances[snapAccountId] = snapBalance;
-      }
+    for (const account of allAccounts) {
+      const acctId = account.id as number;
+      const snapshot = await db.get(
+        'SELECT date, balance FROM snapshots WHERE account_id = ? AND date <= ? ORDER BY date DESC, id DESC LIMIT 1',
+        [acctId, startDate]
+      );
+      if (!snapshot) continue;
+
+      const rollForward = await db.get(
+        `SELECT COALESCE(SUM(CASE WHEN direction = 'inflow' THEN original_amount ELSE -original_amount END), 0) AS flow
+         FROM transactions WHERE account_id = ? AND date > ? AND date < ?`,
+        [acctId, snapshot.date, startDate]
+      );
+      startBalances[acctId] = (snapshot.balance as number) + ((rollForward?.flow as number) || 0);
     }
 
     // Group transactions by category and direction
