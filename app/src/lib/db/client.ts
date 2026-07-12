@@ -87,6 +87,19 @@ async function getDb(): Promise<Database> {
       UNIQUE(date, base_currency, target_currency)
     );
 
+    CREATE TABLE IF NOT EXISTS goals (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      emoji TEXT,
+      target_amount INTEGER NOT NULL,
+      saved_amount INTEGER NOT NULL DEFAULT 0,
+      currency TEXT NOT NULL,
+      target_date TEXT,
+      linked_account_id INTEGER REFERENCES accounts(id),
+      notes TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
     CREATE TABLE IF NOT EXISTS upload_logs (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       account_id INTEGER NOT NULL REFERENCES accounts(id),

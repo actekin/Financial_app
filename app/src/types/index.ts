@@ -179,6 +179,27 @@ export interface Snapshot {
   source: 'manual' | 'computed';
 }
 
+export interface Goal {
+  id: number;
+  name: string;
+  emoji: string | null;
+  targetAmount: number; // cents
+  savedAmount: number; // cents (manual, or computed from linked account)
+  currency: Currency;
+  targetDate: string | null; // YYYY-MM-DD
+  linkedAccountId: number | null;
+  notes: string | null;
+  createdAt: string;
+}
+
+// Goal enriched by the API with computed progress fields
+export interface GoalWithProgress extends Goal {
+  progressPct: number; // 0-100
+  remainingAmount: number; // cents
+  monthsLeft: number | null;
+  requiredMonthlySaving: number | null; // cents/month to hit target by targetDate
+}
+
 export interface ParsedTransaction {
   date: Date;
   description: string;

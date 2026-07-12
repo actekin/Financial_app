@@ -1,7 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Bank, Currency, AccountType, BANK_LABELS, Account, getBankLabel } from '@/types';
+import { PageHeader, Button, EmptyState } from '@/components/ui/primitives';
+import { fullMoney } from '@/components/charts/common';
+import { Wallet, Plus } from 'lucide-react';
 
 const BANK_OPTIONS = Object.entries(BANK_LABELS).map(([value, label]) => ({ value, label }));
 const CURRENCY_OPTIONS = Object.values(Currency);
@@ -42,12 +45,22 @@ export default function AccountsPage() {
   const [snapshotAccountId, setSnapshotAccountId] = useState<number | null>(null);
   const [snapshotDate, setSnapshotDate] = useState('');
   const [snapshotBalance, setSnapshotBalance] = useState('');
+  const [balances, setBalances] = useState<Record<number, number>>({});
 
-  useEffect(() => {
-    fetchAccounts();
+  const fetchBalances = useCallback(async () => {
+    try {
+      const res = await fetch('/api/advisor/context');
+      if (!res.ok) return;
+      const ctx = await res.json();
+      const map: Record<number, number> = {};
+      for (const a of ctx?.cash?.accounts || []) map[a.id] = a.balance;
+      setBalances(map);
+    } catch {
+      // balances are a nice-to-have; ignore failures
+    }
   }, []);
 
-  async function fetchAccounts() {
+  const fetchAccounts = useCallback(async () => {
     try {
       const res = await fetch('/api/accounts');
       if (!res.ok) {
@@ -59,7 +72,12 @@ export default function AccountsPage() {
     } catch (err) {
       console.error('Error loading accounts:', err);
     }
-  }
+  }, []);
+
+  useEffect(() => {
+    // Defer to a microtask so data fetching happens outside the effect body
+    Promise.resolve().then(() => Promise.all([fetchAccounts(), fetchBalances()]));
+  }, [fetchAccounts, fetchBalances]);
 
   async function handleAddAccount(e: React.FormEvent) {
     e.preventDefault();
@@ -151,19 +169,16 @@ export default function AccountsPage() {
   }, {});
 
   return (
-    <div className="p-8 max-w-4xl">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Accounts</h1>
-          <p className="text-gray-400 text-sm mt-1">Manage your financial accounts</p>
-        </div>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors"
-        >
-          + Add Account
-        </button>
-      </div>
+    <div className="p-4 md:p-8 max-w-4xl">
+      <PageHeader
+        title="Accounts"
+        subtitle="Manage your household's financial accounts"
+        actions={
+          <Button onClick={() => setShowForm(!showForm)}>
+            <Plus className="w-4 h-4" /> Add Account
+          </Button>
+        }
+      />
 
       {showForm && (
         <form onSubmit={handleAddAccount} className="bg-gray-900 border border-gray-800 rounded-xl p-6 mb-8 space-y-4">
@@ -272,6 +287,11 @@ export default function AccountsPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
+                  {balances[account.id] !== undefined && (
+                    <span className={`text-sm font-mono tabular-nums mr-1 ${balances[account.id] < 0 ? 'text-red-400' : 'text-gray-200'}`}>
+                      {fullMoney(balances[account.id], account.currency)}
+                    </span>
+                  )}
                   <button
                     onClick={() => {
                       setSnapshotAccountId(account.id);
@@ -295,8 +315,17 @@ export default function AccountsPage() {
       </div>
 
       {accounts.length === 0 && (
-        <div className="text-center py-16">
-          <p className="text-gray-500">No accounts yet. Add your first account to get started.</p>
+        <div className="bg-gray-900 border border-gray-800 rounded-2xl">
+          <EmptyState
+            icon={Wallet}
+            title="No accounts yet"
+            description="Add each bank account and card you both use — statements upload against these."
+            action={
+              <Button onClick={() => setShowForm(true)}>
+                <Plus className="w-4 h-4" /> Add your first account
+              </Button>
+            }
+          />
         </div>
       )}
 

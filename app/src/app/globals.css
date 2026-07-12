@@ -9,3 +9,29 @@ body {
   background: var(--color-background);
   color: var(--color-foreground);
 }
+
+/* Subtle dark scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #374151 transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-thumb {
+  background: #374151;
+  border-radius: 8px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::selection {
+  background: rgba(59, 130, 246, 0.35);
+}
+
+/* Native date/select controls on dark background */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.6);
+}
