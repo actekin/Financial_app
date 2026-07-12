@@ -7,7 +7,7 @@ FinFlow is a single Next.js server with a file-based SQLite database (`data/fina
 | Variable | Required | Purpose |
 |---|---|---|
 | `APP_PASSWORD` | Yes (for any shared deployment) | Shared household password. When set, every page and API requires sign-in. |
-| `HOUSEHOLD_MEMBERS` | No | Comma-separated names shown as buttons on the login screen, e.g. `Arda,Deniz`. |
+| `HOUSEHOLD_MEMBERS` | No | Comma-separated names shown as buttons on the login screen, e.g. `Arda,Meriç`. |
 | `AUTH_SECRET` | No | Extra secret for signing session cookies; set it to invalidate old sessions without changing the password. |
 | `ANTHROPIC_API_KEY` | For the Advisor | Powers the natural-language financial advisor. Get one at [console.anthropic.com](https://console.anthropic.com). |
 | `ADVISOR_MODEL` | No | Override the advisor model (default `claude-opus-4-8`). |
@@ -38,7 +38,7 @@ Then:
 
 ```bash
 fly secrets set APP_PASSWORD='your-shared-password' \
-                HOUSEHOLD_MEMBERS='Arda,Partner' \
+                HOUSEHOLD_MEMBERS='Arda,Meriç' \
                 ANTHROPIC_API_KEY='sk-ant-...'
 fly deploy
 ```
