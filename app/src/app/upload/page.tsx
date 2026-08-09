@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import Papa from 'papaparse';
 import { Bank, Currency, Account, TransactionDirection, getBankLabel } from '@/types';
@@ -26,6 +26,9 @@ export default function UploadPage() {
   const [isDragging, setIsDragging] = useState(false);
   const [parsingPdf, setParsingPdf] = useState(false);
   const [pdfWarnings, setPdfWarnings] = useState<string[]>([]);
+  // Aborts an in-flight PDF extraction when the file or account changes, so a
+  // slow response can't overwrite the preview for a newer selection.
+  const pdfAbortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     fetch('/api/accounts')
@@ -41,8 +44,12 @@ export default function UploadPage() {
     setParsedRows([]);
     setPdfWarnings([]);
 
+    pdfAbortRef.current?.abort();
+
     if (f.name.toLowerCase().endsWith('.pdf') || f.type === 'application/pdf') {
       const account = accounts.find(a => a.id === selectedAccountId);
+      const controller = new AbortController();
+      pdfAbortRef.current = controller;
       setParsingPdf(true);
       try {
         const buffer = await f.arrayBuffer();
@@ -57,6 +64,7 @@ export default function UploadPage() {
         const res = await fetch('/api/parse-pdf', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          signal: controller.signal,
           body: JSON.stringify({
             filename: f.name,
             pdfBase64,
@@ -64,6 +72,7 @@ export default function UploadPage() {
           }),
         });
         const data = await res.json();
+        if (controller.signal.aborted) return;
         if (!res.ok) {
           setParseError(data.error || 'Failed to extract transactions from PDF.');
           return;
@@ -75,9 +84,10 @@ export default function UploadPage() {
         setParsedRows(data.transactions);
         if (Array.isArray(data.warnings)) setPdfWarnings(data.warnings);
       } catch (err: unknown) {
+        if (controller.signal.aborted) return;
         setParseError(err instanceof Error ? err.message : 'Failed to read PDF.');
       } finally {
-        setParsingPdf(false);
+        if (pdfAbortRef.current === controller) setParsingPdf(false);
       }
       return;
     }
@@ -286,7 +296,10 @@ export default function UploadPage() {
         ) : (
           <select
             value={selectedAccountId || ''}
-            onChange={e => setSelectedAccountId(parseInt(e.target.value))}
+            onChange={e => {
+              pdfAbortRef.current?.abort();
+              setSelectedAccountId(parseInt(e.target.value));
+            }}
             className="bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-sm text-white w-full max-w-md"
           >
             <option value="">Choose an account...</option>
@@ -327,7 +340,7 @@ export default function UploadPage() {
                 <FileText className="w-6 h-6 text-blue-400" />
                 <span className="text-white font-medium">{file.name}</span>
                 <button
-                  onClick={(e) => { e.stopPropagation(); setFile(null); setParsedRows([]); setResult(null); setPdfWarnings([]); setParseError(null); }}
+                  onClick={(e) => { e.stopPropagation(); pdfAbortRef.current?.abort(); setFile(null); setParsedRows([]); setResult(null); setPdfWarnings([]); setParseError(null); }}
                   className="text-gray-500 hover:text-gray-300"
                 >
                   <X className="w-4 h-4" />
