@@ -780,7 +780,7 @@ This avoids floating-point errors in aggregation. Display formatting divides by 
 - **Sankey computation** is done server-side (API route) and cached; re-computed only when transactions change or filters change
 - **Transaction table** uses virtual scrolling (e.g., TanStack Virtual) for large lists
 - **Exchange rates** are cached in DB; fetched once per day per currency pair
-- **File parsing** happens client-side (no need to upload raw files to a server); parsed transactions are sent via API
+- **CSV parsing** happens client-side (no need to upload raw files to a server); parsed transactions are sent via API. The opt-in PDF path is the exception: the document is posted to `/api/parse-pdf`, which forwards it to the Anthropic API for extraction (see SPEC.md → Goal)
 - **SQLite** handles up to ~100K transactions without performance issues on a single machine
 
 ---

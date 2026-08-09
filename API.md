@@ -277,6 +277,42 @@ Body: `{ question: string, history?: [{role, content}] }`. Builds the financial 
 
 ---
 
+### `POST /api/parse-pdf`
+
+Extract transactions from a PDF bank/credit-card statement using Claude (model set by `PDF_PARSER_MODEL`, default `claude-opus-5`). The client then feeds the returned transactions into the normal preview → `POST /api/upload` flow.
+
+**Request body:**
+```json
+{
+  "filename": "statement.pdf",
+  "pdfBase64": "<base64-encoded PDF, max 20MB decoded>",
+  "currency": "USD"
+}
+```
+
+`currency` is the fallback account currency when the statement doesn't specify one.
+
+**Response:** `200 OK`
+```json
+{
+  "transactions": [
+    {
+      "date": "2026-06-15T00:00:00.000Z",
+      "description": "ONLINE TRANSFER FROM CHECKING",
+      "amount": 800.0,
+      "direction": "inflow",
+      "currency": "USD",
+      "excludeFromFlow": false
+    }
+  ],
+  "warnings": ["Page 3 was partially unreadable"]
+}
+```
+
+**Errors:** `400` missing `pdfBase64` · `413` PDF over 20MB · `503` `ANTHROPIC_API_KEY` not configured · `502` model refusal, truncation, or upstream API error.
+
+---
+
 ### Auth — `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/auth/me`
 
 Enabled when `APP_PASSWORD` is set. `login` body: `{ name, password }` → sets a signed, httpOnly session cookie (30 days). `me` → `{ authEnabled, user, members }`. All other routes and pages require the cookie via `middleware.ts` when auth is enabled.

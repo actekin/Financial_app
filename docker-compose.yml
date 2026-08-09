@@ -10,8 +10,11 @@ services:
       APP_PASSWORD: ${APP_PASSWORD:?set APP_PASSWORD in .env}
       # Names shown on the login screen (comma separated)
       HOUSEHOLD_MEMBERS: ${HOUSEHOLD_MEMBERS:-}
-      # Required for the AI advisor (console.anthropic.com)
+      # Required for the AI advisor and PDF statement import (console.anthropic.com)
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      # Optional model overrides
+      ADVISOR_MODEL: ${ADVISOR_MODEL:-}
+      PDF_PARSER_MODEL: ${PDF_PARSER_MODEL:-}
     restart: unless-stopped
 
 volumes:

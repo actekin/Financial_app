@@ -2,21 +2,20 @@
 
 ## Goal
 
-FinFlow is a local-first, browser-based personal finance dashboard that ingests bank statements (CSV) from multiple accounts across multiple currencies, auto-categorizes transactions, and visualizes all money flows as an interactive Sankey diagram. The app prioritizes privacy (all data stays on the user's machine) and clarity (one chart tells the full financial story).
+FinFlow is a local-first, browser-based personal finance dashboard that ingests bank statements (CSV or PDF) from multiple accounts across multiple currencies, auto-categorizes transactions, and visualizes all money flows as an interactive Sankey diagram. The app prioritizes privacy and clarity (one chart tells the full financial story). CSV statements are parsed entirely in the browser and never leave the user's machine. PDF import is an explicit opt-in exception: it only functions when the operator configures `ANTHROPIC_API_KEY`, and using it sends the statement document to the Anthropic API for extraction — the Upload page labels the PDF path as AI-extracted, and all other data stays local.
 
 ## Non-Goals
 
 - **Not a bank connector.** No Plaid/Open Banking integration. (Planned for Phase 3.)
 - **No per-user data separation.** Household members share one dataset behind one shared password (`APP_PASSWORD`); there are no individual accounts or permissions.
-- **No PDF parsing.** CSV-only for now.
-- **No LLM categorization.** Rule-based engine only; the LLM powers the advisor, not import categorization.
+- **No LLM categorization.** Rule-based engine only; the LLM powers the advisor and PDF transaction extraction, not import categorization.
 
-> Shipped beyond the original MVP scope: shared-password auth with sessions, single-container deployment (Dockerfile + guide), savings goals, the AI advisor, dashboard charts, and a mobile-responsive layout.
+> Shipped beyond the original MVP scope: shared-password auth with sessions, single-container deployment (Dockerfile + guide), savings goals, the AI advisor, dashboard charts, a mobile-responsive layout, PDF statement import (AI-extracted, opt-in via `ANTHROPIC_API_KEY` — supersedes the earlier "no PDF parsing" non-goal), and home-screen installability (PWA manifest + icons).
 
 ## Core User Flows
 
 1. **Account setup** — User creates accounts (bank, name, currency, type) via the Accounts page.
-2. **CSV upload** — User uploads bank statement CSV files via the Upload page. The app auto-detects the bank format, parses transactions, deduplicates against existing data, and auto-categorizes.
+2. **Statement upload** — User uploads bank statement files via the Upload page. CSVs are parsed in the browser using the selected account's bank format; PDFs are extracted server-side via the Anthropic API (requires `ANTHROPIC_API_KEY`). Either way the user reviews a preview, then the app deduplicates against existing data and auto-categorizes on import.
 3. **Balance snapshot** — User enters starting account balances (or the app infers them from statement data) so the Sankey can show starting/ending reserves.
 4. **Sankey exploration** — User views the main dashboard showing a Sankey diagram: starting reserves → inflows/outflows by category → ending reserves. Hovering shows tooltips; clicking a strand opens a transaction detail panel.
 5. **Transaction relabeling** — User can recategorize individual transactions or rename entire strands to correct auto-categorization errors.

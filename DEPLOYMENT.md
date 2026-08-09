@@ -9,8 +9,9 @@ FinFlow is a single Next.js server with a file-based SQLite database (`data/fina
 | `APP_PASSWORD` | Yes (for any shared deployment) | Shared household password. When set, every page and API requires sign-in. |
 | `HOUSEHOLD_MEMBERS` | No | Comma-separated names shown as buttons on the login screen, e.g. `Arda,Deniz`. |
 | `AUTH_SECRET` | No | Extra secret for signing session cookies; set it to invalidate old sessions without changing the password. |
-| `ANTHROPIC_API_KEY` | For the Advisor | Powers the natural-language financial advisor. Get one at [console.anthropic.com](https://console.anthropic.com). |
+| `ANTHROPIC_API_KEY` | For the Advisor and PDF import | Powers the natural-language financial advisor and PDF statement extraction. Get one at [console.anthropic.com](https://console.anthropic.com). |
 | `ADVISOR_MODEL` | No | Override the advisor model (default `claude-opus-4-8`). |
+| `PDF_PARSER_MODEL` | No | Override the PDF statement extraction model (default `claude-opus-5`). |
 
 ## Option 1 — Fly.io (recommended, ~free for this size)
 
@@ -79,3 +80,13 @@ fly ssh sftp get /app/data/financial.db backup-$(date +%F).db
 - Both partners share one password (`APP_PASSWORD`) and pick their name at login — the session lasts 30 days per device.
 - Sessions are HMAC-signed cookies; no user data is stored server-side beyond the finance database itself.
 - Always serve over HTTPS in production (all three options above give you HTTPS out of the box; the session cookie is marked `secure` in production).
+
+## Using FinFlow on your iPhone (and your partner's)
+
+FinFlow is an installable web app (PWA) — once deployed, it lives on your home screen like a native app, full-screen with its own icon, and both of you see the same live data.
+
+1. Deploy with any option above and set `APP_PASSWORD` (and `HOUSEHOLD_MEMBERS` for the name buttons).
+2. On each iPhone, open the app's URL in **Safari** and sign in.
+3. Tap **Share → Add to Home Screen → Add**.
+
+That's it — the FinFlow icon opens the app full-screen. The same works on iPad, Android (Chrome → "Install app"), and macOS (Safari → File → Add to Dock), all against the same deployment, so everyone sees identical accounts, transactions, and goals.

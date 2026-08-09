@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import Papa from 'papaparse';
 import { Bank, Currency, Account, TransactionDirection, getBankLabel } from '@/types';
@@ -24,6 +24,11 @@ export default function UploadPage() {
   const [uploading, setUploading] = useState(false);
   const [result, setResult] = useState<{ imported: number; skipped: number } | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [parsingPdf, setParsingPdf] = useState(false);
+  const [pdfWarnings, setPdfWarnings] = useState<string[]>([]);
+  // Aborts an in-flight PDF extraction when the file or account changes, so a
+  // slow response can't overwrite the preview for a newer selection.
+  const pdfAbortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     fetch('/api/accounts')
@@ -37,6 +42,55 @@ export default function UploadPage() {
     setResult(null);
     setParseError(null);
     setParsedRows([]);
+    setPdfWarnings([]);
+
+    pdfAbortRef.current?.abort();
+
+    if (f.name.toLowerCase().endsWith('.pdf') || f.type === 'application/pdf') {
+      const account = accounts.find(a => a.id === selectedAccountId);
+      const controller = new AbortController();
+      pdfAbortRef.current = controller;
+      setParsingPdf(true);
+      try {
+        const buffer = await f.arrayBuffer();
+        const bytes = new Uint8Array(buffer);
+        let binary = '';
+        const chunkSize = 0x8000;
+        for (let i = 0; i < bytes.length; i += chunkSize) {
+          binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+        }
+        const pdfBase64 = btoa(binary);
+
+        const res = await fetch('/api/parse-pdf', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          signal: controller.signal,
+          body: JSON.stringify({
+            filename: f.name,
+            pdfBase64,
+            currency: account?.currency || Currency.USD,
+          }),
+        });
+        const data = await res.json();
+        if (controller.signal.aborted) return;
+        if (!res.ok) {
+          setParseError(data.error || 'Failed to extract transactions from PDF.');
+          return;
+        }
+        if (!Array.isArray(data.transactions) || data.transactions.length === 0) {
+          setParseError('No transactions were found in this PDF.');
+          return;
+        }
+        setParsedRows(data.transactions);
+        if (Array.isArray(data.warnings)) setPdfWarnings(data.warnings);
+      } catch (err: unknown) {
+        if (controller.signal.aborted) return;
+        setParseError(err instanceof Error ? err.message : 'Failed to read PDF.');
+      } finally {
+        if (pdfAbortRef.current === controller) setParsingPdf(false);
+      }
+      return;
+    }
 
     const text = await f.text();
 
@@ -242,7 +296,10 @@ export default function UploadPage() {
         ) : (
           <select
             value={selectedAccountId || ''}
-            onChange={e => setSelectedAccountId(parseInt(e.target.value))}
+            onChange={e => {
+              pdfAbortRef.current?.abort();
+              setSelectedAccountId(parseInt(e.target.value));
+            }}
             className="bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-sm text-white w-full max-w-md"
           >
             <option value="">Choose an account...</option>
@@ -258,7 +315,7 @@ export default function UploadPage() {
       {/* Step 2: Upload File */}
       {selectedAccountId && (
         <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-300 mb-2">2. Upload CSV File</label>
+          <label className="block text-sm font-medium text-gray-300 mb-2">2. Upload Statement (CSV or PDF)</label>
           <div
             onDragOver={e => { e.preventDefault(); setIsDragging(true); }}
             onDragLeave={() => setIsDragging(false)}
@@ -270,7 +327,7 @@ export default function UploadPage() {
             onClick={() => {
               const input = document.createElement('input');
               input.type = 'file';
-              input.accept = '.csv';
+              input.accept = '.csv,.pdf';
               input.onchange = (e) => {
                 const f = (e.target as HTMLInputElement).files?.[0];
                 if (f) handleFile(f);
@@ -283,7 +340,7 @@ export default function UploadPage() {
                 <FileText className="w-6 h-6 text-blue-400" />
                 <span className="text-white font-medium">{file.name}</span>
                 <button
-                  onClick={(e) => { e.stopPropagation(); setFile(null); setParsedRows([]); setResult(null); }}
+                  onClick={(e) => { e.stopPropagation(); pdfAbortRef.current?.abort(); setFile(null); setParsedRows([]); setResult(null); setPdfWarnings([]); setParseError(null); }}
                   className="text-gray-500 hover:text-gray-300"
                 >
                   <X className="w-4 h-4" />
@@ -292,11 +349,21 @@ export default function UploadPage() {
             ) : (
               <>
                 <Upload className="w-8 h-8 text-gray-500 mx-auto mb-3" />
-                <p className="text-gray-400 text-sm">Drag and drop a CSV file, or click to browse</p>
-                <p className="text-gray-600 text-xs mt-1">Supports Bank of America, Chase, Lloyds, HSBC, QNB Finansbank, Revolut, Trading 212</p>
+                <p className="text-gray-400 text-sm">Drag and drop a CSV or PDF statement, or click to browse</p>
+                <p className="text-gray-600 text-xs mt-1">CSV: Bank of America, Chase, Lloyds, HSBC, QNB Finansbank, Revolut, Trading 212 · PDF: any bank (AI-extracted, needs ANTHROPIC_API_KEY)</p>
               </>
             )}
           </div>
+        </div>
+      )}
+
+      {/* PDF extraction in progress */}
+      {parsingPdf && (
+        <div className="mb-6 bg-blue-950/30 border border-blue-900 rounded-xl p-4 flex items-start gap-3">
+          <div className="w-5 h-5 shrink-0 mt-0.5 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm text-blue-300">
+            Extracting transactions from the PDF with AI — this can take a minute for long statements…
+          </p>
         </div>
       )}
 
@@ -305,6 +372,19 @@ export default function UploadPage() {
         <div className="mb-6 bg-red-950/30 border border-red-900 rounded-xl p-4 flex items-start gap-3">
           <AlertCircle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
           <p className="text-sm text-red-300">{parseError}</p>
+        </div>
+      )}
+
+      {/* PDF extraction warnings */}
+      {pdfWarnings.length > 0 && !result && (
+        <div className="mb-6 bg-amber-950/30 border border-amber-900 rounded-xl p-4 flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+          <div className="text-sm text-amber-300">
+            <p className="font-medium mb-1">Check these before importing:</p>
+            <ul className="list-disc list-inside space-y-0.5">
+              {pdfWarnings.map((w, i) => <li key={i}>{w}</li>)}
+            </ul>
+          </div>
         </div>
       )}
 

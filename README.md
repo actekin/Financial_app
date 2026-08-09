@@ -7,8 +7,8 @@ A self-hosted finance app for two: ingest bank statements (CSV), auto-categorize
 - **Dashboard** — cash position, income/spending this month vs your trailing average, monthly spending trend, savings goals at a glance, and the Sankey flow diagram with click-to-drill-down.
 - **AI Advisor** — natural-language Q&A grounded in your live data. Every answer comes with a verdict (go for it / hold off / tight), plain-language reasoning citing your numbers, and the charts that support it. Powered by Claude (`ANTHROPIC_API_KEY` required).
 - **Savings goals** — set targets with deadlines, log contributions manually or link a goal to an account so it tracks the balance automatically; see the required monthly saving to stay on track.
-- **Statement import** — CSV parsers for 8 banks (BoA, Chase, Lloyds, HSBC, Amex, QNB Finansbank, Revolut, Trading 212) plus a generic fallback, with dedup and rule-based auto-categorization.
-- **Household access** — shared-password login (`APP_PASSWORD`) with per-person names, signed session cookies, and a mobile-friendly layout so both of you can use it from any device.
+- **Statement import** — CSV parsers for 8 banks (BoA, Chase, Lloyds, HSBC, Amex, QNB Finansbank, Revolut, Trading 212) plus a generic fallback, and **PDF statement import** from any bank via AI extraction (`ANTHROPIC_API_KEY` required), with dedup and rule-based auto-categorization.
+- **Household access** — shared-password login (`APP_PASSWORD`) with per-person names, signed session cookies, and a mobile-friendly layout. Installable as a home-screen app on iPhone/Android/Mac (see [DEPLOYMENT.md](DEPLOYMENT.md#using-finflow-on-your-iphone-and-your-partners)) so both of you use the same live data from any device.
 
 ## Developer Quickstart
 
@@ -21,7 +21,9 @@ pnpm install
 pnpm dev                     # http://localhost:3000
 ```
 
-Without `APP_PASSWORD`, auth is disabled (open local dev). Without `ANTHROPIC_API_KEY`, everything works except the Advisor's natural-language answers (its charts still render).
+Without `APP_PASSWORD`, auth is disabled (open local dev). Without `ANTHROPIC_API_KEY`, everything works except the Advisor's natural-language answers (its charts still render) and PDF statement import — CSV import always works.
+
+Want a populated demo? **[DEMO.md](DEMO.md)** walks through seeding sample accounts and statements from [`demo-data/`](demo-data/), and explains what to export from your real banks for a full household picture.
 
 **Other commands:**
 
