@@ -23,6 +23,8 @@ pnpm dev                     # http://localhost:3000
 
 Without `APP_PASSWORD`, auth is disabled (open local dev). Without `ANTHROPIC_API_KEY`, everything works except the Advisor's natural-language answers (its charts still render).
 
+Want a populated demo? **[DEMO.md](DEMO.md)** walks through seeding sample accounts and statements from [`demo-data/`](demo-data/), and explains what to export from your real banks for a full household picture.
+
 **Other commands:**
 
 ```bash
