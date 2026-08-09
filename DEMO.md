@@ -63,6 +63,7 @@ Go to **Upload**, and for each file: select the matching account, drop the CSV i
 | `demo-data/demo-checking.csv` | Chase Checking |
 | `demo-data/demo-credit-card.csv` | Chase Freedom Card |
 | `demo-data/demo-lloyds.csv` | Lloyds Current |
+| `demo-data/demo-savings-statement.pdf` *(optional — needs `ANTHROPIC_API_KEY`)* | a Chase **Savings** account (snapshot: 2026-05-31 → 8,200.00) |
 
 Transactions are auto-categorized by merchant rules (salary, rent, groceries, subscriptions, travel…) and duplicates are fingerprinted, so re-uploading the same file is harmless — rows are skipped, not doubled.
 
@@ -81,7 +82,7 @@ Stop the dev server and delete `app/data/financial.db` — the schema is recreat
 
 ## Part 2 — Getting the full picture of your family finances
 
-FinFlow ingests **CSV statement exports only** — files are parsed in your browser and never uploaded anywhere; only the parsed transactions reach the local database. So "documentation to upload" means CSV exports from each institution, plus a balance snapshot per account. Here's the checklist.
+FinFlow ingests **CSV statement exports** (parsed in your browser — the file never leaves your machine) and **PDF statements** (sent to the server, which extracts transactions with Claude — requires `ANTHROPIC_API_KEY`). So "documentation to upload" means statement exports from each institution, plus a balance snapshot per account. Prefer CSV when your bank offers it — it's deterministic and free; use PDF when CSV isn't available, and review the preview before importing. Here's the checklist.
 
 ### 1. One account in FinFlow per real-world account
 
@@ -116,7 +117,7 @@ For each account, enter one **balance snapshot** dated just before your earliest
 
 FinFlow tracks **cash flow**, not net worth. There is currently no ingestion for:
 
-- **PDF statements, scans, or photos** — CSV only; no OCR. If a bank only offers PDF, convert it to CSV first (many banks offer both — look under "export" or "download activity").
+- **Scans or photos of paper statements** — digital PDF statements work (AI-extracted), but photographed paper statements are hit-and-miss; prefer the bank's own PDF or CSV export.
 - **OFX/QFX/QIF files** — planned, not implemented.
 - **Mortgages, loans, property values, pensions, insurance policies** — no asset/liability model. Partial workaround: represent a loan as an account and snapshot its (negative) balance so payments show up in the flow.
 - **Per-person ownership** — accounts belong to the household, not individuals; use account names/groups (e.g. "Alex — Chase Checking") to keep things distinguishable.
@@ -125,7 +126,7 @@ FinFlow tracks **cash flow**, not net worth. There is currently no ingestion for
 ### Quick checklist
 
 - [ ] Account created in FinFlow for every checking, savings, credit card, and investment account
-- [ ] CSV export uploaded for each, covering 3+ months
+- [ ] CSV or PDF statement uploaded for each, covering 3+ months (`ANTHROPIC_API_KEY` needed for PDFs)
 - [ ] Opening balance snapshot entered per account
 - [ ] Recurring monthly re-export habit (dedup makes this painless)
 - [ ] Savings goals entered, linked to accounts where possible

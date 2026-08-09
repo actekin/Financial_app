@@ -9,5 +9,8 @@ Upload each file to an account created with these exact settings, after saving t
 | `demo-checking.csv` | Chase | Checking / Current | USD | 2026-05-31 → 12,500.00 |
 | `demo-credit-card.csv` | Chase | Credit Card | USD | 2026-05-31 → -850.00 |
 | `demo-lloyds.csv` | Lloyds | Checking / Current | GBP | 2026-05-31 → 6,300.00 |
+| `demo-savings-statement.pdf` | Chase | Savings | USD | 2026-05-31 → 8,200.00 |
 
 The bank selected on the account determines date parsing: Chase reads MM/DD/YYYY, Lloyds reads DD/MM/YYYY. Transactions span June 1 – August 7, 2026.
+
+`demo-savings-statement.pdf` exercises the AI-powered PDF import path (its transfers mirror the checking CSV's "transfer to savings" rows). Uploading it requires `ANTHROPIC_API_KEY` to be set; skip it otherwise — the three CSVs make a complete demo on their own.
